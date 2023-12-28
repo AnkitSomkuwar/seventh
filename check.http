@@ -12,4 +12,7 @@ Content-Type :application/json
 }
 
 ### 
-GET http://localhost:3000/matches/5/
+GET http://localhost:3000/players/5/
+
+###
+GET http://localhost:3000/players/1/matches
