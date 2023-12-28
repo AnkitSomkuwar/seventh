@@ -34,7 +34,7 @@ const convertDbObjectToResponseObject = dbObject => {
     matchId: dbObject.match_id,
     match: dbObject.match,
     year: dbObject.year,
-    playerMatchId: player_match_id,
+    playerMatchId: dbObject.player_match_id,
     score: dbObject.score,
     fours: dbObject.fours,
     sixes: dbObject.sixes,
@@ -95,5 +95,20 @@ app.get('/matches/:matchId/', async (request, response) => {
   response.send(convertDbObjectToResponseObject(player))
 })
 
+// APIs 5
+app.get('/players/:playerId/matches', async (request, response) => {
+  const {playerId} = request.params
+  const playerMatches = `
+  SELECT * 
+  FROM match_details
+  NATURAL JOIN  player_match_score
+  WHERE 
+   player_id = ${playerId};`
+  const playerList = await db.all(playerMatches)
+  response.send(
+    playerList.map(eachMath => convertDbObjectToResponseObject(eachMath)),
+  )
+})
 module.exports = app
+
  
