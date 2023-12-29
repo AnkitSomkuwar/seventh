@@ -29,11 +29,21 @@ initializeDBAndServer()
 
 const convertDbObjectToResponseObject = dbObject => {
   return {
-    playerId: dbObject.player_id,
-    playerName: dbObject.player_name,
+    //playerId: dbObject.player_id,
+    //playerName: dbObject.player_name,
     matchId: dbObject.match_id,
     match: dbObject.match,
     year: dbObject.year,
+    //playerMatchId: dbObject.player_match_id,
+    //score: dbObject.score,
+    //fours: dbObject.fours,
+    //sixes: dbObject.sixes,
+  }
+}
+const convertDbObjectToResponseObject1 = dbObject => {
+  return {
+    playerId: dbObject.player_id,
+    playerName: dbObject.player_name,
     playerMatchId: dbObject.player_match_id,
     score: dbObject.score,
     fours: dbObject.fours,
@@ -48,7 +58,7 @@ app.get('/players/', async (request, response) => {
   const playerDetails = await db.all(getPlayers)
   response.send(
     playerDetails.map(eachPlayer =>
-      convertDbObjectToResponseObject(eachPlayer),
+      convertDbObjectToResponseObject1(eachPlayer),
     ),
   )
 })
@@ -63,7 +73,7 @@ app.get('/players/:playerId/', async (request, response) => {
     player_id = ${playerId};`
 
   const player = await db.get(getPlayerQuery)
-  response.send(convertDbObjectToResponseObject(player))
+  response.send(convertDbObjectToResponseObject1(player))
 })
 
 // APIs 3
@@ -109,6 +119,25 @@ app.get('/players/:playerId/matches', async (request, response) => {
     playerList.map(eachMath => convertDbObjectToResponseObject(eachMath)),
   )
 })
+
+//APIs 6
+
+app.get('/matches/:matchId/players', async (request, response) => {
+  const {matchId} = request.params
+  const gettngPlayerQuery = `
+  SELECT player_id,player_name
+  FROM player_match_score 
+  NATURAL JOIN player_details
+  WHERE 
+  match_id = ${matchId};`
+  const playedPlayer = await db.all(gettngPlayerQuery)
+  response.send(
+    playedPlayer.map(eachPlayerPlayer =>
+      convertDbObjectToResponseObject(eachPlayerPlayer),
+    ),
+  )
+})
+
 module.exports = app
 
  
