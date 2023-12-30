@@ -1,21 +1,42 @@
-GET http://localhost:3000/players/
+GET http://localhost:3000/states/
 
-###
-GET http://localhost:3000/players/7/
+### 
+GET http://localhost:3000/states/20/
 
-###
-PUT http://localhost:3000/players/2/
-Content-Type :application/json
+### 
+POST http://localhost:3000/districts/
+Content-Type : application/json
 
 {
-  "playerName": "Raju"
+  "districtName": "Bagalkot",
+  "stateId": 3,
+  "cases": 2323,
+  "cured": 2000,
+  "active": 315,
+  "deaths": 8
 }
 
-### 
-GET http://localhost:3000/players/5/
+###
+GET http://localhost:3000/districts/32/
 
 ###
-GET http://localhost:3000/players/3/matches
+DELETE http://localhost:3000/districts/321/
 
-### 
-GET http://localhost:3000/matches/4/players/
+###
+PUT http://localhost:3000/districts/3/
+Content-Type : application/json
+
+{
+  "districtName": "Nadia",
+  "stateId": 3,
+  "cases": 9628,
+  "cured": 6524,
+  "active": 3000,
+  "deaths": 104
+}
+
+###
+GET http://localhost:3000/states/3/
+
+###
+GET http://localhost:3000/districts/356/details/
