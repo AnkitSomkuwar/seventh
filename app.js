@@ -6,7 +6,7 @@ const sqlite3 = require('sqlite3')
 const app = express()
 app.use(express.json())
 
-const dbPath = path.join(__dirname, 'covid19India.db')
+const dbPath = path.join(__dirname, './cricketMatchDetails.db')
 
 let db = null
 
@@ -17,7 +17,7 @@ const initializeDBAndServer = async () => {
       driver: sqlite3.Database,
     })
     app.listen(3000, () => {
-      console.log('Server Running at http://localhost:3001/')
+      console.log('Server Running at http://localhost:3000/')
     })
   } catch (e) {
     console.log(`DB Error: ${e.message}`)
@@ -27,143 +27,142 @@ const initializeDBAndServer = async () => {
 
 initializeDBAndServer()
 
-const convertDbObjectToResponseObject = dbObject => {
+const convertPlayerDbObject = dbObject => {
   return {
-    stateId: dbObject.state_id,
-    districtId: dbObject.district_id,
-    stateName: dbObject.state_name,
-    population: dbObject.population,
-    districtName: dbObject.district_name,
-    cases: dbObject.cases,
-    cured: dbObject.cured,
-    active: dbObject.active,
-    deaths: dbObject.deaths,
+    playerId: dbObject.player_id,
+    playerName: dbObject.player_name,
   }
 }
 
-//APIs 1
-app.get('/states/', async (request, response) => {
-  const getDetail = `
-  SELECT * 
-  FROM state
-  ;`
-  const stateDetail = await db.all(getDetail)
+const convertDbObjectToResponseObject = dbObject => {
+  return {
+    matchId: dbObject.match_id,
+    match: dbObject.match,
+    year: dbObject.year,
+  }
+}
+const convertDbObjectToResponseObject1 = dbObject => {
+  return {
+    playerId: dbObject.player_id,
+    playerName: dbObject.player_name,
+    playerMatchId: dbObject.player_match_id,
+    score: dbObject.score,
+    fours: dbObject.fours,
+    sixes: dbObject.sixes,
+  }
+}
+// APIs 1
+app.get('/players/', async (request, response) => {
+  const getPlayers = `
+    SELECT * 
+    FROM player_details;`
+  const playerDetails = await db.all(getPlayers)
   response.send(
-    stateDetail.map(eachState => convertDbObjectToResponseObject(eachState)),
+    playerDetails.map(eachPlayer =>
+      convertDbObjectToResponseObject1(eachPlayer),
+    ),
   )
 })
 
-//APIs 2
-app.get('/states/:stateId/', async (request, response) => {
-  const {stateId} = request.params
-  const getStateDetail = `
-  SELECT * 
-  FROM state
-  WHERE 
-  state_id = ${stateId}
-  ;`
-  const state = await db.get(getStateDetail)
-  response.send(convertDbObjectToResponseObject(state))
+// APIs 2
+app.get('/players/:playerId/', async (request, response) => {
+  const {playerId} = request.params
+  const getPlayerQuery = `
+    SELECT * 
+    FROM player_details
+    WHERE 
+    player_id = ${playerId};`
+
+  const player = await db.get(getPlayerQuery)
+  response.send(convertDbObjectToResponseObject1(player))
 })
 
-//APIs 3
-app.post('/districts/', async (request, response) => {
-  const {districtName, stateId, cases, cured, active, deaths} = request.body
-  const addingState = `
-  INSERT INTO 
-  district(district_name, state_id, cases, cured, active, deaths)
-  VALUES (
-    '${districtName}','${stateId}','${cases}','${cured}','${active}','${deaths}');`
-  await db.run(addingState)
-  response.send('District Successfully Added')
+// APIs 3
+
+app.put('/players/:playerId/', async (request, response) => {
+  const {playerId} = request.params
+  const playerDeatils = request.body
+  const {playerName} = playerDeatils
+  const updateQuery = `
+  UPDATE player_details
+  SET player_name = '${playerName}'
+  WHERE 
+  player_id = ${playerId};`
+
+  await db.run(updateQuery)
+  response.send('Player Details Updated')
 })
 
-//APIs 4
-app.get('/districts/:districtId/', async (request, response) => {
-  const {districtId} = request.params
-  const getDistrict = `
+// APIs 4
+
+app.get('/matches/:matchId/', async (request, response) => {
+  const {matchId} = request.params
+  const getPlayerMatch = `
   SELECT * 
-  FROM district
+  FROM match_details
   WHERE 
-  district_id = ${districtId} ;`
-  const districtName = await db.get(getDistrict)
-  response.send(convertDbObjectToResponseObject(districtName))
+  match_id = ${matchId};`
+  const player = await db.get(getPlayerMatch)
+  response.send(convertDbObjectToResponseObject(player))
 })
 
 // APIs 5
-app.delete('/districts/:districtId/', async (request, response) => {
-  const {districtId} = request.params
-  const deleteDistrictQuery = `
-  DELETE 
-  FROM district
+app.get('/players/:playerId/matches', async (request, response) => {
+  const {playerId} = request.params
+  const playerMatches = `
+  SELECT * 
+  FROM match_details
+  NATURAL JOIN  player_match_score
   WHERE 
-  district_id = ${districtId} ;`
-  await db.run(deleteDistrictQuery)
-  response.send('District Removed')
+   player_id = ${playerId};`
+  const playerList = await db.all(playerMatches)
+  response.send(
+    playerList.map(eachMath => convertDbObjectToResponseObject(eachMath)),
+  )
 })
 
 //APIs 6
-app.put('/districts/:districtId/', async (request, response) => {
-  const {districtId} = request.params
-  const districtDetails = request.body
-  const {districtName, stateId, cases, cured, active, deaths} = districtDetails
 
-  const updatingQuery = `
-  UPDATE district 
-  SET 
-  district_name = '${districtName}',
-  state_id = '${stateId}',
-  cases = '${cases}',
-  cured = '${cured}',
-  active = '${active}',
-  deaths = '${deaths}'
+app.get('/matches/:matchId/players', async (request, response) => {
+  const {matchId} = request.params
+  const gettngPlayerQuery = `
+  SELECT *
+  FROM player_match_score 
+  NATURAL JOIN player_details
   WHERE 
-  district_id = ${districtId} ;`
-
-  await db.run(updatingQuery)
-  response.send('District Details Updated')
+  match_id = ${matchId};`
+  const playedPlayer = await db.all(gettngPlayerQuery)
+  response.send(
+    playedPlayer.map(eachPlayerPlayer =>
+      convertPlayerDbObject(eachPlayerPlayer),
+    ),
+  )
 })
 
 // APIs 7
-app.get('/states/:stateId/stats/', async (request, response) => {
-  const {stateId} = request.params
-  const getStatsQuery = `
+app.get('/players/:playerId/playerScores', async (request, response) => {
+  const {playerId} = request.params
+
+  const getPlayerQuery = `
   SELECT 
-  SUM(cases),
-  SUM(cured),
-  SUM(active),
-  SUM(deaths)
-  FROM 
-  district
-  WHERE 
-  state_id = ${stateId};`
+  player_details.player_id,
+  player_details.player_name,
+  SUM(score),
+  SUM(fours),
+  SUM(sixes)
+  FROM player_details INNER JOIN player_match_score ON
+    player_details.player_id = player_match_score.player_id
+  WHERE
+  player_details.player_id = ${playerId};`
 
-  const statstics = await db.get(getStatsQuery)
-  console.log(statstics)
+  const statistical = await db.get(getPlayerQuery)
   response.send({
-    totalCases: statstics['SUM(cases)'],
-    totalCured: statstics['SUM(cured)'],
-    totalActive: statstics['SUM(active)'],
-    totalDeaths: statstics['SUM(deaths)'],
+    player_id,
+    player_name,
+    totalScore: statistical['SUM(score)'],
+    totalFours: statistical['SUM(fours)'],
+    totalSixes: statistical['SUM(sixes)'],
   })
-})
-
-// APIs 8
-app.get('/districts/:districtId/details/', async (request, response) => {
-  const {districtId} = request.params
-  const getDistrictIdQuery = `
-   SELECT state_id 
-   FROM district 
-   NATURAL JOIN State
-   WHERE
-   district_id = ${districtId};`
-  const getDistrictIdQueryResponse = await db.get(getDistrictIdQuery)
-  const getStateNameQuery = `
-select state_name as stateName from state
-where state_id = ${getDistrictIdQueryResponse.state_id};
-`
-  const getStateNameQueryResponse = await db.get(getStateNameQuery)
-  response.send(getStateNameQueryResponse)
 })
 
 module.exports = app
