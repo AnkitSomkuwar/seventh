@@ -134,7 +134,7 @@ app.get('/states/:stateId/stats/', async (request, response) => {
   SUM(active),
   SUM(deaths)
   FROM 
-  districts
+  district
   WHERE 
   state_id = ${stateId};`
 
@@ -153,7 +153,8 @@ app.get('/districts/:districtId/details/', async (request, response) => {
   const {districtId} = request.params
   const getDistrictIdQuery = `
    SELECT state_id 
-   FROM district
+   FROM district 
+   NATURAL JOIN State
    WHERE
    district_id = ${districtId};`
   const getDistrictIdQueryResponse = await db.get(getDistrictIdQuery)
